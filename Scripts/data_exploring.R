@@ -120,6 +120,13 @@ ggplot(mice[sex == "F" & pregnancyStatus == "pregnant" | pregnancyStatus == "not
   geom_boxplot(aes(x = pregnancyStatus, y = weight))
 
 
+mice[pregnancyStatus == "pregnant", preg := 1]
+mice[pregnancyStatus == "not", preg := 0]
+
+#when are PEMA pregnant?
+ggplot(mice[taxonID == "PEMA"])+
+  geom_point(aes(x = date, y = preg))+
+  facet_wrap(~y, scales = "free")
 
 
 
