@@ -20,7 +20,7 @@ trapdat <- rbindlist(ls.files, fill = TRUE)
 
 
 
-# Begin basic cleaning and inventory -------------------------------------------
+# Begin basic cleaning and inventory for Peromyscus -------------------------------------------
 
 #remove first three cols that are long IDs
 trapdat[, uid := NULL][, nightuid := NULL][, namedLocation := NULL]
@@ -36,20 +36,26 @@ trapdat[, date := ymd(collectDate)]
 trapdat[, y := year(date)]
 trapdat[, m := month(date)]
 
+#sample size by taxon ID
+trapdat[, .N, taxonID]
+
+#grab instances of PELE and PEMA mice
+mice <- trapdat[taxonID == "PELE" | taxonID == "PEMA"]
+
+#make a numeric version of pregnancy
+mice[pregnancyStatus == "pregnant", preg := 1]
+mice[pregnancyStatus == "not", preg := 0]
 
 
 # look into data ----------------------------------------------------------
 
 #number of unique sites and plots
-trapdat[, length(unique(siteID))]
-trapdat[, length(unique(plotID))]
+mice[, length(unique(siteID))]
+mice[, length(unique(plotID))]
 
-#sample size by taxon ID
-trapdat[, .N, taxonID]
 
 #collect info of sites for only PELE and PEMA sampling
-siteinfo <- trapdat[taxonID == "PELE" | taxonID == "PEMA", 
-                    .(lat = mean(decimalLatitude), 
+siteinfo <- mice[, .(lat = mean(decimalLatitude), 
                       long = mean(decimalLongitude),
                       elevation = mean(elevation),
                       habitat = getmode(nlcdClass),
@@ -61,9 +67,6 @@ siteinfo <- trapdat[taxonID == "PELE" | taxonID == "PEMA",
 
 
 # get general mice densities and body size ---------------------------------------------------------------
-
-#grab instances of PELE and PEMA mice
-mice <- trapdat[taxonID == "PELE" | taxonID == "PEMA"]
 
 #make year a factor, make month an integer
 mice[, y := as.factor(y)]
@@ -120,9 +123,6 @@ ggplot(mice[sex == "F" & pregnancyStatus == "pregnant" | pregnancyStatus == "not
   geom_boxplot(aes(x = pregnancyStatus, y = weight))
 
 
-mice[pregnancyStatus == "pregnant", preg := 1]
-mice[pregnancyStatus == "not", preg := 0]
-
 #when are PEMA pregnant?
 ggplot(mice[taxonID == "PEMA"])+
   geom_point(aes(x = date, y = preg))+
@@ -165,6 +165,13 @@ bysite[predabund == 0, predbin := "no"]
 
 ggplot(bysite)+
   geom_boxplot(aes(x = predbin, y = N))
+
+
+
+# save --------------------------------------------------------------------
+
+
+saveRDS(mice, "Output/Data/peromycus.rds")
 
 
 
